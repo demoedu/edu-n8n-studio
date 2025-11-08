@@ -1,0 +1,27 @@
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    env_file: .env
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    command: http --url=${NGROK_DOMAIN} n8n:5678
+    env_file: .env
+    ports:
+      - "4040:4040"
+    depends_on:
+      - n8n
+
+volumes:
+  n8n_data:
+    external: true

@@ -1,0 +1,29 @@
+# Environments
+.env
+.envrc
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# misc
+.DS_Store
+
+# vscode
+.vscode/
+
+# Git related
+*.patch
+*.log
+
+# Miscellaneous files
+*.db
+*.sqlite3
+*.bin
+
+# other
+.note/
+.cursor/mcp.json
+prompts/
