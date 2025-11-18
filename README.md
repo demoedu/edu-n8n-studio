@@ -79,6 +79,15 @@ n8n 워크플로우에서 Execute Command 노드를 사용하여 ffmpeg 명령�
 ffmpeg -i input.mp4 -c:v libx264 output.mp4
 ```
 
+## yt-dlp 사용
+
+```bash
+yt-dlp -x --audio-format mp3 --audio-quality 0 \
+  --output "/tmp/%(id)s.%(ext)s" \
+  --print "after_move:%(filepath)s" \
+  "{{ $json.link }}"
+```
+
 ## 볼륨
 
 기존 `n8n_data` 볼륨을 그대로 사용하므로 모든 워크플로우와 설정이 유지됩니다.

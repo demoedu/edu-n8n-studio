@@ -1,0 +1,13 @@
+{
+  "name": "n8n-workflows",
+  "version": "1.0.0",
+  "description": "n8n workflow automation with backup scripts",
+  "scripts": {
+    "backup": "bun run scripts/backup-workflows.ts",
+    "backup:watch": "bun run scripts/backup-workflows.ts --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "bun-types": "latest"
+  }
+}

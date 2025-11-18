@@ -27,3 +27,4 @@ venv.bak/
 .note/
 .cursor/mcp.json
 prompts/
+.mcp.json
