@@ -1,0 +1,279 @@
+{
+  "updatedAt": "2025-11-08T18:21:31.459Z",
+  "createdAt": "2025-11-08T18:01:34.947Z",
+  "id": "F6HwN6lowRhzety4",
+  "name": "Giphy to Shorts copy",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "4d1902ae-27de-4d1c-bfa6-7b9c9882c181",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.giphy.com/v1/gifs/random",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "api_key",
+              "value": "YsQuivrsfVOszQ7rGfjSdiChNnrmW76y"
+            },
+            {
+              "name": "tag",
+              "value": "funny"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -48
+      ],
+      "id": "80a12bda-797c-45ce-ac63-44889ddbae50",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.images.original.mp4 }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        -48
+      ],
+      "id": "c977db16-9c73-40b5-89c9-da9aee442e63",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/tmp/input_{{ $now.toUnixInteger() }}.mp4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -48
+      ],
+      "id": "9b21c85e-b0c1-41bf-af08-a758d0b11e08",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-image",
+              "name": "imagePath",
+              "value": "/Users/seungwonan/Dev/studio/n8n/2025-11-09_03.11.16.png",
+              "type": "string"
+            },
+            {
+              "id": "set-text",
+              "name": "scriptText",
+              "value": "={{ $('HTTP Request').item.json.data.title || '재미있는 순간' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -48
+      ],
+      "id": "32f31569-e4c0-44c2-8672-1582bd444934",
+      "name": "Set Config"
+    },
+    {
+      "parameters": {
+        "command": "=INPUT=$(ls -t /tmp/input_*.mp4 | head -1) && OUTPUT=\"/tmp/short_$(date +%s).mp4\" && IMAGE=\"{{ $json.imagePath }}\" && TEXT=\"{{ $json.scriptText }}\" && DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"$INPUT\") && DURATION=${DURATION%.*} && DURATION=$((DURATION > 0 ? DURATION : 1)) && LOOPS=$((15 / DURATION + 1)) && if [ -f \"$IMAGE\" ]; then ffmpeg -y -stream_loop $LOOPS -i \"$INPUT\" -loop 1 -i \"$IMAGE\" -filter_complex \"color=black:s=1080x1920:d=15[bg]; [0:v]scale=-2:1000:force_original_aspect_ratio=decrease[gif]; [1:v]scale=500:-1[img]; [bg][gif]overlay=(W-w)/2:(H-h)/2:shortest=1[v1]; [v1][img]overlay=(W-w)/2:80[v2]; [v2]drawtext=fontfile=/System/Library/Fonts/Supplemental/Arial Bold.ttf:text='$TEXT':fontcolor=white:fontsize=56:box=1:boxcolor=black@1.0:boxborderw=20:x=(w-text_w)/2:y=h-th-300[out]\" -map \"[out]\" -t 15 -c:v libx264 -preset medium -crf 18 \"$OUTPUT\"; else ffmpeg -y -stream_loop $LOOPS -i \"$INPUT\" -filter_complex \"color=black:s=1080x1920:d=15[bg]; [0:v]scale=-2:1000:force_original_aspect_ratio=decrease[gif]; [bg][gif]overlay=(W-w)/2:(H-h)/2:shortest=1[v1]; [v1]drawtext=fontfile=/System/Library/Fonts/Supplemental/Arial Bold.ttf:text='$TEXT':fontcolor=white:fontsize=56:box=1:boxcolor=black@1.0:boxborderw=20:x=(w-text_w)/2:y=h-th-300[out]\" -map \"[out]\" -t 15 -c:v libx264 -preset medium -crf 18 \"$OUTPUT\"; fi && echo \"$OUTPUT\" && rm \"$INPUT\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -48
+      ],
+      "id": "2940f867-9e71-44a4-bc67-a95ceb88e751",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.stdout }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -48
+      ],
+      "id": "3056c830-74bc-4808-ba70-1d05a5f2f341",
+      "name": "Read/Write Files from Disk1"
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Set Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Config": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bd7a71b3-9ed3-4606-8534-fcc776ef8bd1",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-08T18:01:34.951Z",
+      "createdAt": "2025-11-08T18:01:34.951Z",
+      "role": "workflow:owner",
+      "workflowId": "F6HwN6lowRhzety4",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

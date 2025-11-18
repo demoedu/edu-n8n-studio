@@ -1,0 +1,186 @@
+{
+  "updatedAt": "2025-10-17T17:07:30.886Z",
+  "createdAt": "2025-10-17T16:11:16.358Z",
+  "id": "efYpmPuLDSauwdD7",
+  "name": "Hugging Face Papers Daily Crawler",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://huggingface.co/papers",
+        "options": {}
+      },
+      "id": "http_request",
+      "name": "Fetch HF Papers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML 파싱을 위한 간단한 정규식 사용\nconst html = $input.first().json.data;\n\n// 논문 제목과 링크 추출\nconst titleRegex = /<a[^>]*href=\"\\/papers\\/([^\"]+)\"[^>]*>([^<]+)<\\/a>/g;\nconst papers = [];\n\nlet match;\nlet count = 0;\n\nwhile ((match = titleRegex.exec(html)) !== null && count < 10) {\n  const link = match[1];\n  const title = match[2].trim();\n  \n  if (title && link) {\n    papers.push({\n      json: {\n        title: title,\n        link: `https://huggingface.co/papers/${link}`,\n        date: new Date().toISOString().split('T')[0]\n      }\n    });\n    count++;\n  }\n}\n\nreturn papers.length > 0 ? papers : [{ json: { title: 'No papers found', link: '', date: new Date().toISOString().split('T')[0] } }];"
+      },
+      "id": "code_node",
+      "name": "Parse Papers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "=📚 **Hugging Face Daily Papers - {{ $json.date }}**\n\n**{{ $json.title }}**\n🔗 {{ $json.link }}\n\n---"
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        864,
+        304
+      ],
+      "id": "67da9e1f-3429-4500-b18f-488583d71dce",
+      "name": "Send a message",
+      "webhookId": "e486532e-9746-48f8-90bf-ad077182f260",
+      "credentials": {
+        "discordBotApi": {
+          "id": "P0nK7YtThojox924",
+          "name": "Discord Bot account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch HF Papers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HF Papers": {
+      "main": [
+        [
+          {
+            "node": "Parse Papers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Papers": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "Asia/Seoul",
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "88d61c3c-4bcc-4b82-98cd-40663eb6c8ae",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-17T16:11:16.360Z",
+      "createdAt": "2025-10-17T16:11:16.360Z",
+      "role": "workflow:owner",
+      "workflowId": "efYpmPuLDSauwdD7",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

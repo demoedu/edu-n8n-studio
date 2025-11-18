@@ -1,0 +1,168 @@
+{
+  "updatedAt": "2025-11-18T16:51:59.000Z",
+  "createdAt": "2025-11-18T16:48:02.617Z",
+  "id": "N0HSRe33uIFRZMTf",
+  "name": "My Sub-workflow",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "fileSizeLimitNotice": " ",
+        "binaryPropertyName": "={{ $('Start').item.binary.data }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        0
+      ],
+      "id": "5eb4cf6d-2685-49a4-abf5-6ecdac446ba8",
+      "name": "오디오 전사",
+      "credentials": {
+        "openAiApi": {
+          "id": "MyayuS8zrM1FTv2i",
+          "name": "demodev.connect"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd041eda-e6fd-4479-8b43-42f2fe35fa9b",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "9d56f5e9-9849-492c-8704-b647e0e34560",
+      "name": "Return"
+    },
+    {
+      "id": "250f5880-6b0d-4ccc-95c2-4f3808ed9074",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "오디오 전사",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "오디오 전사": {
+      "main": [
+        [
+          {
+            "node": "Return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "7c00dd58-1b74-4d6a-b74a-8d11de64fe72",
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-18T16:48:02.620Z",
+      "createdAt": "2025-11-18T16:48:02.620Z",
+      "role": "workflow:owner",
+      "workflowId": "N0HSRe33uIFRZMTf",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

@@ -1,0 +1,247 @@
+{
+  "updatedAt": "2025-11-14T02:51:22.000Z",
+  "createdAt": "2025-11-12T11:53:08.576Z",
+  "id": "OdbRQMiAXQXhhXdt",
+  "name": "x 트윗 생성",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "text": "={{ $json.tweet }}",
+        "additionalFields": {}
+      },
+      "id": "7624114f-b06d-4ca0-9601-9d99bb6f6396",
+      "name": "X 트윗 발행",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// OpenAI 응답에서 트윗 텍스트 추출\nconst items = $input.all();\n\nconst processed = items.map((item, index) => {\n  // OpenAI 응답에서 텍스트 추출\n  const aiResponse = item.json.message?.content || item.json.choices?.[0]?.message?.content || item.json.text || '';\n  \n  return {\n    json: {\n      tweet: aiResponse.trim(),\n      generatedAt: new Date().toISOString(),\n      index: index\n    }\n  };\n});\n\nreturn processed;"
+      },
+      "id": "29f3f5d7-3b00-43ba-bf45-2618f24fd149",
+      "name": "트윗 텍스트 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "chatModel": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "당신은 전문 소셜미디어 마케터입니다. 주어진 뉴스 기사를 바탕으로 매력적이고 공유하고 싶은 트윗을 작성해주세요.\n\n요구사항:\n- 280자 이내로 작성\n- 이모지 2-3개 사용\n- 핵심 내용을 간결하게 요약\n- 흥미를 유발하는 문구 사용\n- 해시태그 1-2개 포함\n- 한국어로 작성"
+            },
+            {
+              "content": "=제목: {{ $json.title }}\n\n내용: {{ $json.description }}\n\n링크: {{ $json.link }}\n\n위 기사를 바탕으로 매력적인 트윗을 작성해주세요."
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 200,
+          "temperature": 0.8
+        },
+        "requestOptions": {}
+      },
+      "id": "8fff9333-7ef7-415c-ab0d-d1eeaea2ffb7",
+      "name": "AI 트윗 생성",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        128
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "MyayuS8zrM1FTv2i",
+          "name": "demodev.connect"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// RSS 피드에서 최신 3개 항목만 선택\nconst items = $input.all();\n\n// 날짜순으로 정렬하고 최신 3개만 선택\nconst sortedItems = items\n  .sort((a, b) => {\n    const dateA = new Date(a.json.isoDate || a.json.pubDate);\n    const dateB = new Date(b.json.isoDate || b.json.pubDate);\n    return dateB - dateA;\n  })\n  .slice(0, 3);\n\n// 필요한 정보만 추출\nconst processed = sortedItems.map(item => ({\n  json: {\n    title: item.json.title,\n    link: item.json.link,\n    description: item.json.contentSnippet || item.json.description || '',\n    pubDate: item.json.isoDate || item.json.pubDate\n  }\n}));\n\nreturn processed;"
+      },
+      "id": "fdc6302b-595e-457c-8e6e-4fbeb4ab0694",
+      "name": "필터 및 변환",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://news.ycombinator.com/rss",
+        "options": {}
+      },
+      "id": "8c7ab352-3ecc-4b00-9635-e85eaff28f24",
+      "name": "RSS Feed Reader",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "653f6956-0c9c-4d6a-adb2-5cda1ada0866",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        128
+      ]
+    }
+  ],
+  "connections": {
+    "트윗 텍스트 추출": {
+      "main": [
+        [
+          {
+            "node": "X 트윗 발행",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 트윗 생성": {
+      "main": [
+        [
+          {
+            "node": "트윗 텍스트 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "필터 및 변환": {
+      "main": [
+        [
+          {
+            "node": "AI 트윗 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Reader": {
+      "main": [
+        [
+          {
+            "node": "필터 및 변환",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Reader",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d086cc12-62cf-4323-80a4-12e60fa95e98",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-12T11:53:08.582Z",
+      "createdAt": "2025-11-12T11:53:08.582Z",
+      "role": "workflow:owner",
+      "workflowId": "OdbRQMiAXQXhhXdt",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

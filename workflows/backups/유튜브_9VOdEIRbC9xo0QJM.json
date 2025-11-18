@@ -1,0 +1,289 @@
+{
+  "updatedAt": "2025-10-20T13:18:18.000Z",
+  "createdAt": "2025-10-11T06:48:35.302Z",
+  "id": "9VOdEIRbC9xo0QJM",
+  "name": "유튜브",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        128
+      ],
+      "id": "4c4cc6e1-8d53-48c7-9ea8-a4a3b58ffda9",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2899c221-6eb8-8058-a57d-fa0728c2fdeb",
+          "mode": "list",
+          "cachedResultName": "유튜브",
+          "cachedResultUrl": "https://www.notion.so/2899c2216eb88058a57dfa0728c2fdeb"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        128
+      ],
+      "id": "1043a7a1-43a1-4316-ad94-89440f313a1d",
+      "name": "Get a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "ZZGeENNo0DKiLT1h",
+          "name": "seunan"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.property_rss_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        128
+      ],
+      "id": "87e37d84-4410-41b5-910c-2faf7f0a312b",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "dB9f4B02ocpTICIEY",
+          "mode": "list",
+          "cachedResultName": "YouTube Transcript Ninja ⚡️🥷⚡ (topaz_sharingan/Youtube-Transcript-Scraper-1)",
+          "cachedResultUrl": "https://console.apify.com/actors/dB9f4B02ocpTICIEY/input"
+        },
+        "customBody": "={\n    \"includeTimestamps\": \"No\",\n    \"language\": \"Default\",\n    \"startUrls\": [\n        \"{{ $json.link }}\"\n    ]\n}"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        896,
+        128
+      ],
+      "id": "1c368f3f-8fe7-4231-b5bf-02db04df3fca",
+      "name": "Run an Actor and get dataset",
+      "credentials": {
+        "apifyApi": {
+          "id": "M2u7ZAFP47sJwJUD",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bca5af9f-f238-48d3-b7d8-d7f1a5025b72",
+              "leftValue": "={{ $json.isoDate }}",
+              "rightValue": "={{ $now.plus(-1, \"days\") }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        128
+      ],
+      "id": "928a219c-4d0d-496f-b3fd-1831f1559c8d",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.transcript }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "너는 유튜브 영상 대본(Transcript)을 분석하고 요약하는 전문 요약 챗봇이다.\n\n# 역할\n- 유튜브 영상의 전체 대본을 입력받으면, 내용의 흐름과 핵심 메시지를 빠르게 파악한다.\n- 시청자가 영상을 보지 않아도 내용을 이해할 수 있도록 간결하고 명확하게 요약한다.\n- 문체는 자연스럽고 읽기 쉬운 요약문 형태로 작성한다.\n- 영상의 주제, 핵심 요점, 결론, 그리고 필요한 경우 타임라인별 요약을 함께 제공한다.\n\n# 분석 원칙\n1. 불필요한 말, 반복, 추임새(“음…”, “그니까…”)는 모두 제거한다.\n2. 실제 전달된 정보, 주장, 사례, 핵심 스토리만 요약에 포함한다.\n3. 대화나 강의 영상의 경우, 화자들의 주요 논점과 결론을 구분해 명확히 전달한다.\n4. 대본이 길 경우, 3~5개의 주요 섹션으로 나누어 요약한다.\n5. 필요시 영상의 주제 태그나 핵심 키워드(#태그 형식)도 추가한다."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        128
+      ],
+      "id": "84ebc317-b56f-4141-b69b-b1db56642e60",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "VdbrCRQGpIU0WKuI",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a database page": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run an Actor and get dataset": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Run an Actor and get dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "fb049922-b8b6-4d2d-b055-b884d5bce4f7",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-11T06:48:35.307Z",
+      "createdAt": "2025-10-11T06:48:35.307Z",
+      "role": "workflow:owner",
+      "workflowId": "9VOdEIRbC9xo0QJM",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

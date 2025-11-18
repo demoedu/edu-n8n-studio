@@ -1,0 +1,524 @@
+{
+  "updatedAt": "2025-11-18T17:13:42.000Z",
+  "createdAt": "2025-10-18T06:42:01.692Z",
+  "id": "VphaNZPjYP890yDW",
+  "name": "유튜브 요약 자동화",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        0
+      ],
+      "id": "6a56ce65-1d17-4c63-8e4f-d7611b1ca64a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2909c221-6eb8-8000-a840-e254a456c611",
+          "mode": "list",
+          "cachedResultName": "yt",
+          "cachedResultUrl": "https://www.notion.so/2909c2216eb88000a840e254a456c611"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        96
+      ],
+      "id": "dd8514e4-cf04-4997-b2ea-28a00e1ab49b",
+      "name": "Get many database pages",
+      "credentials": {
+        "notionApi": {
+          "id": "dDCoLryGX5gSbbpe",
+          "name": "유튜브 요약"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.property_rss_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        496,
+        96
+      ],
+      "id": "93204d18-59fe-4234-881c-20b5f267ea3d",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=너는 유튜브 영상 대본(Transcript)을 분석하고 요약하는 전문 요약 챗봇이다.\n\n# 역할\n- 유튜브 영상의 전체 대본을 입력받으면, 내용의 흐름과 핵심 메시지를 빠르게 파악한다.\n- 시청자가 영상을 보지 않아도 내용을 이해할 수 있도록 간결하고 명확하게 요약한다.\n- 문체는 자연스럽고 읽기 쉬운 요약문 형태로 작성한다.\n- 영상의 주제, 핵심 요점, 결론, 그리고 필요한 경우 타임라인별 요약을 함께 제공한다.\n\n# 분석 원칙\n1. 불필요한 말, 반복, 추임새(“음…”, “그니까…”)는 모두 제거한다.\n2. 실제 전달된 정보, 주장, 사례, 핵심 스토리만 요약에 포함한다.\n3. 대화나 강의 영상의 경우, 화자들의 주요 논점과 결론을 구분해 명확히 전달한다.\n4. 대본이 길 경우, 3~5개의 주요 섹션으로 나누어 요약한다.\n5. 필요시 영상의 주제 태그나 핵심 키워드(#태그 형식)도 추가한다."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2064,
+        96
+      ],
+      "id": "b35cfd92-5770-45df-961f-a9e196d86a73",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2136,
+        320
+      ],
+      "id": "8a314f1f-ae5c-4264-9a3e-c0602ad1cfdc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZmuP0MESUuMeBhBQ",
+          "name": "senugw0u"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n  const oneDayAgo = new Date();\n  oneDayAgo.setDate(oneDayAgo.getDate() - 1);\n\n  return items.filter(item => {\n    const pubDate = new Date(item.json.isoDate);\n    return pubDate >= oneDayAgo;});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        96
+      ],
+      "id": "969c3246-720a-4e6d-a285-7e0e4314f4cd",
+      "name": "oneDayAgo.getDate() - N 일전 필터링",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n  return items.map(item => {\n    const text = item.json.output;\n    const maxLength = 2000;\n    const children = [];\n\n    for (let i = 0; i < text.length; i += maxLength) {\n      children.push({\n        object: \"block\",\n        type: \"paragraph\",\n        paragraph: {\n          rich_text: [{\n            type: \"text\",\n            text: {content: text.substring(i, i + maxLength)}\n          }]\n        }\n      });\n    }\n\n    // ✅ 이전 노드에서 title과 link 가져오기\n    const editFields = $node['Edit Fields'].json;\n\n    return {\n      json: {\n        parent: {\n          database_id: \"2909c221-6eb8-80ea-85de-edaaad3ef6c0\"\n        },\n        properties: {\n          name: {\n            title: [{\n              text: {\n                content: editFields.title || 'Untitled'  // ✅ 수정\n              }\n            }]\n          }\n        },\n        children: children\n      }\n    };\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        96
+      ],
+      "id": "e37c692b-75e5-416a-a951-86ee6610753c",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=yt-dlp -x --audio-format mp3 --audio-quality 0 \\\n  --output \"/tmp/%(id)s.%(ext)s\" \\\n  --print \"after_move:%(filepath)s\" \\\n  \"{{ $json.link }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        96
+      ],
+      "id": "aef032a9-ced5-4979-aad3-1110f92a58fc",
+      "name": "yt-dlp 오디오 파일 다운로드"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $json.stdout }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        96
+      ],
+      "id": "694291a1-ceda-4155-b08f-5c44599fd677",
+      "name": "오디오 파일 읽기"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "binaryPropertyName": "={{ $('오디오 파일 읽기').item.binary.data }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        96
+      ],
+      "id": "5eb4cf6d-2685-49a4-abf5-6ecdac446ba8",
+      "name": "오디오 전사",
+      "credentials": {
+        "openAiApi": {
+          "id": "MyayuS8zrM1FTv2i",
+          "name": "demodev.connect"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2640,
+        96
+      ],
+      "id": "e41fe919-ee25-40ad-9064-f956760d2ca7",
+      "name": "HTTP Request",
+      "credentials": {
+        "notionApi": {
+          "id": "dDCoLryGX5gSbbpe",
+          "name": "유튜브 요약"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "977f780c-246b-496d-91df-8d0a6f513b74",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "ce40bde5-be97-4c25-aa3b-636ec3a2e02b",
+              "name": "title",
+              "value": "={{ $('oneDayAgo.getDate() - N 일전 필터링').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "8089603b-835d-407c-999c-6bcd94fef19e",
+              "name": "link",
+              "value": "={{ $('oneDayAgo.getDate() - N 일전 필터링').item.json.link }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1840,
+        96
+      ],
+      "id": "5f3fdc24-1054-4f7a-b626-1de8370a03c2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        192
+      ],
+      "id": "5661b2d0-9d2b-426f-9748-48554c79c8fb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a02d7bf2-562b-4f12-b118-d7044e3432c1",
+              "leftValue": "={{ $('oneDayAgo.getDate() - N 일전 필터링').first().json.isEmpty() }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        96
+      ],
+      "id": "27be827f-842e-4b16-aa53-02394b47e81f",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "oneDayAgo.getDate() - N 일전 필터링",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "oneDayAgo.getDate() - N 일전 필터링": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "yt-dlp 오디오 파일 다운로드": {
+      "main": [
+        [
+          {
+            "node": "오디오 파일 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "오디오 파일 읽기": {
+      "main": [
+        [
+          {
+            "node": "오디오 전사",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "오디오 전사": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "yt-dlp 오디오 파일 다운로드",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "AI Agent": [
+      {
+        "json": {
+          "output": "네, 유튜브 영상 대본 분석 및 요약 요청을 확인했습니다. 아래와 같이 전문적인 분석을 통해 요약문을 작성했습니다.\n\n### **영상 주제**\n\nAI 자동화로 수익을 창출하려는 초보자들이 복잡한 에이전시 설립 대신, 프리랜서로 시작하여 첫 유료 클라이언트를 확보하는 구체적인 단계별 전략을 다룹니다.\n\n### **핵심 요약**\n\n이 영상은 AI 자동화 사업을 시작하려는 사람들이 흔히 저지르는 실수, 즉 처음부터 거창한 에이전시를 만들려는 생각을 지적하며 시작합니다. 핵심 메시지는 **'작고 단순하게 시작하라'**는 것입니다. 대규모 시스템이나 자본, 개인 브랜드 없이도 한 사람의 고질적인 문제 하나를 해결해주는 것만으로 첫 유료 클라이언트를 얻을 수 있습니다.\n\n영상은 잠재 고객을 찾고, 제안하고, 계약을 성사시키는 구체적인 단계를 안내하며, 특히 기존 인맥을 활용한 **'웜 아웃리치(Warm Outreach)'**의 중요성을 강조합니다. 투명하고 인간적인 접근 방식으로 신뢰를 쌓고, 첫 프로젝트에서 기대 이상의 결과물을 제공함으로써 장기적인 성공의 발판을 마련하는 방법을 제시합니다.\n\n### **타임라인별 요약**\n\n#### **1. 도입: AI 사업에 대한 흔한 오해 깨기**\n\nAI 자동화 사업을 시작할 때 대부분이 잘못된 생각으로 접근합니다. 이 영상은 성공을 가로막는 세 가지 대표적인 오해를 바로잡습니다.\n\n*   **오해 1: 에이전시와 복잡한 시스템이 필요하다.**\n    *   처음부터 완벽한 사업체처럼 보일 필요는 없습니다. 프리랜서로 시작하는 것이 올바른 순서입니다.\n*   **오해 2: 시작하려면 많은 돈이 필요하다.**\n    *   서비스 기반 비즈니스이므로 자동화 툴 구독료, 약간의 API 비용, 그리고 배우려는 시간만 투자하면 충분합니다.\n*   **오해 3: 유명세나 많은 팔로워가 필요하다.**\n    *   개인 브랜드 없이도 올바른 사람을 찾아 올바른 제안을 하는 방법만 알면 됩니다.\n\n#### **2. 마인드셋 전환: 'AI'가 아닌 '결과'를 팔아라**\n\n고객에게 'AI'라는 기술 자체를 파는 것이 아니라, AI를 통해 얻을 수 있는 **'결과(Outcome)'**를 팔아야 합니다. 예를 들어, 리드 관리 자동화, 반복 업무 제거, 온보딩 프로세스 간소화 등 비즈니스 언어로 소통해야 합니다. 성공적인 자동화 시스템은 보통 **전통적 자동화(60%), AI 보조(30%), 인간의 검토(10%)**의 황금 비율로 구성됩니다.\n\n#### **3. 1단계: 니즈 파악과 매력적인 제안 만들기**\n\n*   **틈새 시장(Niche) 선택:** 자신이 잘 알거나 관심 있는 산업, 혹은 주변에 인맥이 있는 분야에서 시작하세요. 사람들이 시간 낭비하는 패턴(예: 반복적인 DM, 스케줄링, 보고서 작성)을 찾아야 합니다.\n*   **'4R' 프레임워크로 제안 구성:**\n    1.  **결과 (Result):** \"온보딩 프로세스의 90%를 자동화하여 5시간 걸리던 일을 30분으로 줄여드립니다\"와 같이 명확한 시간 또는 비용 절감 효과를 제시하세요.\n    2.  **로드맵 (Roadmap):** 어떤 툴을 쓰는지가 아니라, 어떻게 문제를 해결해 줄 것인지 A부터 B까지의 과정을 명확히 설명하여 신뢰를 구축하세요.\n    3.  **위험 제거 (Risk Reversal):** 처음에는 무료 컨설팅, 성공 시 지불, 만족하지 않을 시 환불 등 상대방의 부담을 덜어주는 조건을 제시하여 망설임을 없애세요.\n    4.  **검토 (Review):** 고객의 거절 이유나 질문을 모두 기록하세요. 이는 당신의 제안에서 부족한 부분을 보완할 수 있는 최고의 피드백입니다.\n\n#### **4. 2단계: 첫 클라이언트 찾기 (웜 아웃리치 전략)**\n\n모르는 사람에게 연락하는 '콜드 아웃리치'는 성공률이 낮고 지치기 쉽습니다. 대신 이미 나를 알거나 한두 다리 건너 아는 사람에게 접근하는 **'웜 아웃리치(Warm Outreach)'**에 집중해야 합니다.\n\n*   **연락처 목록 만들기:** 이메일, 소셜 미디어 팔로워, 휴대폰 연락처에 있는 모든 사람이 당신의 잠재적 연결고리입니다.\n*   **인간적인 대화 시작:** 템플릿을 복사/붙여넣기 하지 마세요. \"새로운 직장 축하해\", \"최근 올린 사업 포스팅 인상 깊었어\"처럼 개인적이고 진솔한 메시지로 대화를 시작하세요.\n*   **투명하게 도움 요청:** 전문가인 척하지 말고 솔직하게 자신의 상황을 공유하세요. \"요즘 AI 자동화 시스템을 만들고 있는데, 경험을 쌓기 위해 도움 될 만한 사람을 찾고 있어. 혹시 주변에 관심 있을 만한 사람 알아?\" 와 같은 접근은 상대방의 도움을 이끌어내기 쉽습니다.\n\n#### **5. 3단계: 계약 성사 및 장기적 성장**\n\n*   **탐색 미팅 (Discovery Call):** 고객이 관심을 보이면 15~30분간 미팅을 잡고, 그들의 문제와 고충을 듣는 데 집중하세요. 해결책을 제시하기 전에 문제를 정확히 진단해야 합니다.\n*   **제안 및 계약:** 탐색 미팅에서 얻은 정보를 바탕으로 맞춤형 해결책을 제안합니다. 가치를 명확히 전달하면 고객은 기꺼이 비용을 지불합니다.\n*   **기대 이상의 결과 제공:** 첫 클라이언트에게는 모든 것을 쏟아부어 최고의 결과를 만들어주세요. 그들의 성공 사례, 후기, 추천이 당신의 가장 강력한 무기가 되어 다음 클라이언트를 자연스럽게 데려올 것입니다. 이 과정을 통해 얻은 결과물들을 꾸준히 기록하고 공유하여 당신의 디지털 이력서로 활용하세요.\n\n### **결론**\n\nAI 자동화로 성공적인 비즈니스를 구축하는 길은 거창한 에이전시에서 시작되지 않습니다. **프리랜서로 시작하여 한 사람의 문제를 완벽하게 해결**하고, 그 경험을 바탕으로 신뢰와 실력을 쌓아 점차 컨설턴트, 그리고 에이전시로 성장하는 것이 가장 현실적이고 효과적인 방법입니다. 꾸준함이 모든 것을 결정합니다.\n\n---\n### **핵심 키워드**\n#AI자동화 #프리랜서 #AI에이전시 #첫클라이언트확보 #디지털노마드 #사업시작 #수익화전략"
+        }
+      }
+    ]
+  },
+  "versionId": "a9e25258-111f-4c12-b006-71d734bd8b22",
+  "versionCounter": 15,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-18T06:42:01.698Z",
+      "createdAt": "2025-10-18T06:42:01.698Z",
+      "role": "workflow:owner",
+      "workflowId": "VphaNZPjYP890yDW",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

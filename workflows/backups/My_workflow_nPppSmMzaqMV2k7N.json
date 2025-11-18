@@ -1,0 +1,1107 @@
+{
+  "updatedAt": "2025-10-17T10:23:07.000Z",
+  "createdAt": "2025-10-17T07:09:55.295Z",
+  "id": "nPppSmMzaqMV2k7N",
+  "name": "My workflow",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "너는 30년차 시니어 건강관리 전문가야.\n\n시니어 건광관리를 위한 팁을 하나 찾아서 **정확히 다음 형식으로만** 작성해줘:\n\n제목: [30자 이내의 임팩트 있는 제목]\n내용: [이슈를 35-40초 분량으로 설명할 수 있는 흥미로운 스토리, 12문장]\n\n조건:\n- 권장 주제: 시니어 건강관리법, 몸에좋은 음식 및 효능, 시니어 정신건강 관리\n\n- 스토리는 **정확히 12문장**으로 구성\n\n**중요: 반드시 \"제목:\"과 \"내용:\"으로 시작하는 두 줄만 출력하고, 다른 설명이나 코멘트는 절대 추가하지 마세요.**",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -5920,
+        752
+      ],
+      "id": "32470aea-5352-43f6-b181-b17ef5dbd9d6",
+      "name": "1. 주제 생성"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output;\n\nconsole.log('=== AI 출력 원본 ===');\nconsole.log(aiOutput);\nconsole.log('===================');\n\ntry {\n  // 여러 가지 패턴으로 제목과 내용 추출 시도\n  let title = '';\n  let content = '';\n  \n  // 패턴 1: \"제목:\" 으로 시작하는 경우\n  const titleMatch1 = aiOutput.match(/제목:\\s*(.+)/);\n  const contentMatch1 = aiOutput.match(/내용:\\s*([\\s\\S]+)/);\n  \n  // 패턴 2: \"**제목:**\" 처럼 마크다운 형식인 경우\n  const titleMatch2 = aiOutput.match(/\\*\\*제목:\\*\\*\\s*(.+)/);\n  const contentMatch2 = aiOutput.match(/\\*\\*내용:\\*\\*\\s*([\\s\\S]+)/);\n  \n  // 패턴 3: 첫 번째 줄이 제목, 나머지가 내용인 경우\n  const lines = aiOutput.split('\\n').filter(l => l.trim().length > 0);\n  \n  if (titleMatch1 && contentMatch1) {\n    title = titleMatch1[1].trim();\n    content = contentMatch1[1].trim();\n    console.log('✅ 패턴 1로 추출 성공');\n  } else if (titleMatch2 && contentMatch2) {\n    title = titleMatch2[1].trim();\n    content = contentMatch2[1].trim();\n    console.log('✅ 패턴 2로 추출 성공');\n  } else if (lines.length >= 2) {\n    title = lines[0].replace(/^제목:\\s*/i, '').replace(/^\\*\\*제목:\\*\\*\\s*/i, '').trim();\n    content = lines.slice(1).join(' ').replace(/^내용:\\s*/i, '').replace(/^\\*\\*내용:\\*\\*\\s*/i, '').trim();\n    console.log('✅ 패턴 3으로 추출 성공');\n  } else {\n    console.error('❌ 모든 패턴 실패');\n    console.error('AI 출력:', aiOutput);\n    throw new Error('AI 출력에서 제목과 내용을 찾을 수 없습니다.');\n  }\n  \n  // 제목이 너무 길면 자르기\n  if (title.length > 50) {\n    title = title.substring(0, 47) + '...';\n    console.log('⚠️ 제목이 너무 길어서 자름');\n  }\n  \n  if (content.length < 50) {\n    console.warn('⚠️ 내용이 너무 짧습니다:', content.length, '자');\n  }\n  \n  console.log('📌 제목:', title);\n  console.log('📌 내용 길이:', content.length, '자');\n  \n  // 장면 분할 - 12개로 고정\n  const sentences = content.split(/[.!?]\\s+/).filter(s => s.length > 10);\n  const scenesCount = 12; // 12개 고정\n  const scenes = [];\n  \n  // 문장을 12개 장면으로 분배\n  for (let i = 0; i < scenesCount; i++) {\n    const sentenceIndex = Math.floor(i * sentences.length / scenesCount);\n    scenes.push({\n      sceneNumber: i + 1,\n      text: sentences[sentenceIndex] || sentences[0] || content,\n      duration: 3, // 모든 장면 3초\n      batchNumber: Math.floor(i / 4) + 1 // 배치 번호 (1, 2, 3)\n    });\n  }\n  \n  const workId = `video_${Date.now()}`;\n  const tmpDir = `/tmp/videos/${workId}`;\n  \n  console.log(`✅ 작업 ID: ${workId}`);\n  console.log(`✅ 총 ${scenesCount}개 장면 생성 (각 3초)`);\n  console.log(`📊 예상 총 길이: ${scenesCount * 3}초`);\n  \n  return {\n    json: {\n      workId: workId,\n      tmpDir: tmpDir,\n      videoTitle: title,\n      fullScript: content,\n      scenes: scenes,\n      totalScenes: scenesCount,\n      timestamp: new Date().toISOString(),\n      aiRawOutput: aiOutput\n    }\n  };\n  \n} catch (error) {\n  console.error('❌ 데이터 추출 실패:', error.message);\n  console.error('AI 원본 출력:', aiOutput);\n  throw new Error(`데이터 추출 실패: ${error.message}\\n\\nAI 출력:\\n${aiOutput}`);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5616,
+        752
+      ],
+      "id": "c0b62662-4824-4770-89fe-ea6f906516d4",
+      "name": "2. 데이터 추출"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "scenes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -4736,
+        752
+      ],
+      "id": "cc833741-65d4-42d4-b89f-5d31957a8f28",
+      "name": "4. 장면 분할"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 한국어 스토리를 영어 이미지 프롬프트로 변환해줘:\n\n{{ $json.text }}\n\n요구사항:\n- 한국사람으로 한정\n- 유튜브 쇼츠용 세로 이미지 (9:16 비율, vertical format)\n- 사실적이고 생동감 있는 장면\n- 텍스트나 글자 제외\n- Photorealistic, 4K quality\n- 100단어 이내\n\n오직 영어 프롬프트만 출력.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -4064,
+        608
+      ],
+      "id": "4706dfbf-4929-4204-aaf6-588147e5e892",
+      "name": "5a. 이미지 프롬프트"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/imagen-3.0-generate-002",
+          "mode": "list"
+        },
+        "prompt": "={{ $json.output }}\n\nVertical format, 9:16 aspect ratio, photorealistic, 4K quality",
+        "options": {
+          "sampleCount": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -3712,
+        32
+      ],
+      "id": "50d0538e-99e2-4892-b460-25b0743b7c39",
+      "name": "6a. 이미지 생성"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -2576,
+        720
+      ],
+      "id": "1b496d7f-45cb-444d-bc61-2c316de9fb45",
+      "name": "8. 데이터 병합"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 스토리를 유튜브 쇼츠용 **정확히 35-40초 분량** 내레이션으로 작성해줘:\n\n{{ $('2. 데이터 추출').first().json.fullScript }}\n\n요구사항:\n- 첫 3초에 시청자 주목 끌기\n- 구어체, 자연스러운 말투\n- 간결하고 리듬감 있게\n- **정확히 35-40초 분량** (130-160단어)\n- 자연스러운 호흡과 강약 조절\n\n오직 내레이션 스크립트만 출력.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -4048,
+        944
+      ],
+      "id": "8d2ef1fc-07e2-4d0a-a3e2-4c91f5b62d53",
+      "name": "5b. 스크립트 작성"
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\n# 10. 동영상 제작 - 오디오 싱크 버전\n\nTMP_DIR=\"{{ $('2. 데이터 추출').first().json.tmpDir }}\"\n\necho \"=== 동영상 제작 시작 ===\"\necho \"📁 tmpDir: $TMP_DIR\"\n\n# 디렉토리 확인\nif [ ! -d \"$TMP_DIR\" ]; then\n    echo \"❌ 디렉토리가 없습니다: $TMP_DIR\"\n    exit 1\nfi\n\ncd \"$TMP_DIR\" || exit 1\necho \"✅ 현재 디렉토리: $(pwd)\"\necho \"\"\n\n# 파일 확인\necho \"📋 파일 목록:\"\nls -lh\necho \"\"\n\n# concat.txt 확인\nif [ ! -f \"concat.txt\" ]; then\n    echo \"❌ concat.txt 없음!\"\n    exit 1\nfi\n\necho \"📝 concat.txt 내용:\"\ncat concat.txt\necho \"\"\n\n# audio.mp3 확인\nif [ ! -f \"audio.mp3\" ]; then\n    echo \"❌ audio.mp3 없음!\"\n    exit 1\nfi\n\n# 이미지 파일 확인\nIMAGE_COUNT=$(ls -1 scene_*.png 2>/dev/null | wc -l)\nif [ \"$IMAGE_COUNT\" -eq 0 ]; then\n    echo \"❌ 이미지 파일 없음!\"\n    exit 1\nfi\n\necho \"✅ concat.txt: OK\"\necho \"✅ audio.mp3: OK\"\necho \"✅ 이미지: ${IMAGE_COUNT}개\"\necho \"\"\n\n# 오디오 길이 확인 (FFprobe 사용)\nAUDIO_DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 audio.mp3 2>/dev/null)\necho \"🔊 오디오 길이: ${AUDIO_DURATION}초\"\necho \"\"\n\n# FFmpeg 실행 - 중요: -shortest 제거!\necho \"🎬 FFmpeg 실행 중...\"\nffmpeg -y -hide_banner \\\n  -f concat -safe 0 -i concat.txt \\\n  -i audio.mp3 \\\n  -vf \"scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,fps=30\" \\\n  -c:v libx264 -preset medium -crf 23 \\\n  -c:a aac -b:a 192k \\\n  -pix_fmt yuv420p \\\n  -movflags +faststart \\\n  output.mp4\n\n# ⚠️ -shortest 옵션 제거됨!\n# 이제 오디오가 끝날 때까지 영상이 재생됩니다.\n\n# 결과 확인\nif [ -f \"output.mp4\" ]; then\n    FILE_SIZE=$(ls -lh output.mp4 | awk '{print $5}')\n    VIDEO_DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 output.mp4 2>/dev/null)\n    echo \"\"\n    echo \"✅ 동영상 생성 완료!\"\n    echo \"📁 파일: output.mp4\"\n    echo \"💾 크기: $FILE_SIZE\"\n    echo \"⏱️ 영상 길이: ${VIDEO_DURATION}초\"\nelse\n    echo \"❌ 동영상 생성 실패!\"\n    exit 1\nfi"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -2000,
+        752
+      ],
+      "id": "e962984f-5d29-4968-8759-ea2c0ae57657",
+      "name": "10. 동영상 제작"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $('9-1. Concat 파일 내용 생성').first().json.outputPath }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        752
+      ],
+      "id": "245d2de7-ec99-484e-a78a-4e650d04d35b",
+      "name": "11. 동영상 읽기"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('9-1. Concat 파일 내용 생성').first().json.videoTitle }}",
+        "regionCode": "KR",
+        "categoryId": "24",
+        "options": {
+          "defaultLanguage": "ko",
+          "description": "={{ $('9-1. Concat 파일 내용 생성').first().json.fullScript }}",
+          "embeddable": false,
+          "license": "youtube",
+          "privacyStatus": "public",
+          "publicStatsViewable": true,
+          "selfDeclaredMadeForKids": false,
+          "tags": "=시니어, 50대건강, 60대건강, 70대건강, 오팔세대, 중년건강, 노년건강, 부모님건강, 건강, 건강정보, 건강관리, 시니어건강, 건강상식, 건강쇼츠, 1분건강, 유튜브쇼츠"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        752
+      ],
+      "id": "b2790868-6979-4870-ad08-cbfa656ab4c7",
+      "name": "12. 유튜브 업로드",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "command": "=rm -rf {{ $('2. 데이터 추출').first().json.tmpDir }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        752
+      ],
+      "id": "e4114222-b6cd-4e88-8408-348fdca22c48",
+      "name": "13. 정리"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp-1219",
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -5920,
+        944
+      ],
+      "id": "63192fa3-de2c-4e73-ba44-e63c350406f9",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp-1219",
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4048,
+        1120
+      ],
+      "id": "d2df4dae-c959-4149-8411-47774e124cfa",
+      "name": "Google Gemini Chat Model1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp-1219",
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4064,
+        768
+      ],
+      "id": "6b66d5d1-6107-416e-9f9b-139296615688",
+      "name": "Google Gemini Chat Model2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 7a-1. 이미지 데이터 준비 - 배치1 (scene 1-4)\n\nconst items = $input.all();\nconst tmpDir = $('2. 데이터 추출').first().json.tmpDir;\nconst BATCH_NUMBER = 1; // 배치1 고정\n\nconsole.log('=== 배치 1 이미지 데이터 준비 ===');\nconsole.log('입력 아이템 개수:', items.length);\nconsole.log('tmpDir:', tmpDir);\n\n// 배치1의 장면 데이터 가져오기 (sceneNumber 1-4)\nconst allScenes = $('4. 장면 분할').all();\nconst originalScenes = allScenes.filter(s => s.json.batchNumber === BATCH_NUMBER);\n\nconsole.log('배치', BATCH_NUMBER, ':', originalScenes.length, '개 장면');\n\nif (originalScenes.length === 0) {\n  throw new Error('배치 1 장면 데이터 없음');\n}\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const binaryData = item.binary;\n  \n  if (!binaryData) {\n    console.error('아이템', i + 1, ': Binary 데이터 없음');\n    continue;\n  }\n  \n  const binaryKey = Object.keys(binaryData)[0];\n  if (!binaryKey) {\n    console.error('아이템', i + 1, ': Binary 키 없음');\n    continue;\n  }\n  \n  if (i >= originalScenes.length) {\n    console.error('아이템', i + 1, ': 원본 장면 인덱스 초과');\n    continue;\n  }\n  \n  const originalScene = originalScenes[i];\n  const sceneNumber = originalScene.json.sceneNumber;\n  const text = originalScene.json.text;\n  const duration = originalScene.json.duration;\n  \n  const fileName = 'scene_' + String(sceneNumber).padStart(2, '0') + '.png';\n  const filePath = tmpDir + '/' + fileName;\n  \n  console.log('✅ 장면', sceneNumber, ':', fileName, '(', duration, '초)');\n  \n  results.push({\n    json: {\n      sceneNumber: sceneNumber,\n      text: text,\n      duration: duration,\n      filePath: filePath,\n      fileName: fileName,\n      tmpDir: tmpDir\n    },\n    binary: {\n      data: binaryData[binaryKey]\n    }\n  });\n}\n\nconsole.log('✅ 배치 1 총', results.length, '개 이미지 준비 완료');\n\nif (results.length === 0) {\n  throw new Error('처리된 이미지가 없습니다.');\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3488,
+        32
+      ],
+      "id": "192d9b1c-f928-407b-8e88-8a616fc7172c",
+      "name": "7a-1. 이미지 데이터 준비"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tmpDir = $('2. 데이터 추출').first().json.tmpDir;\nconst audioPath = `${tmpDir}/audio.mp3`;\n\nconsole.log('=== 오디오 저장 준비 ===');\nconsole.log('저장 경로:', audioPath);\nconsole.log('tmpDir:', tmpDir);\n\n// Binary 데이터 확인\nconst inputItem = $input.first();\nconst binaryData = inputItem.binary;\n\nif (!binaryData) {\n  throw new Error('TTS 생성 실패: Binary 데이터가 없습니다.');\n}\n\n// Binary 필드 이름 확인 (첫 번째 필드 사용)\nconst binaryKeys = Object.keys(binaryData);\nconsole.log('사용 가능한 Binary 필드:', binaryKeys);\n\nif (binaryKeys.length === 0) {\n  throw new Error('TTS Binary 데이터에 필드가 없습니다.');\n}\n\n// 첫 번째 Binary 필드를 'data'로 표준화\nconst firstKey = binaryKeys[0];\nconsole.log('사용할 Binary 필드:', firstKey);\n\nreturn {\n  json: {\n    audioPath: audioPath,\n    tmpDir: tmpDir,\n    originalBinaryKey: firstKey  // 디버깅용\n  },\n  binary: {\n    data: binaryData[firstKey]  // 'data'로 통일\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3488,
+        944
+      ],
+      "id": "1c0bd229-65f6-4505-a7c3-4c657ba2c39c",
+      "name": "7b-1. 오디오 경로 준비"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.audioPath }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -3248,
+        944
+      ],
+      "id": "1fb647d7-a587-4201-810f-7047ed1fffa4",
+      "name": "7b-2. 오디오 파일 저장"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 9-1. Concat 파일 내용 생성 - 단순 버전\n\nconst allItems = $input.all();\n\nconsole.log('=== 데이터 병합 및 Concat 파일 생성 시작 ===');\nconsole.log('총', allItems.length, '개 아이템 수신');\n\n// 1. 데이터 분리\nconst originalData = $('2. 데이터 추출').first().json;\nconst imageItems = allItems.filter(item => item.json.filePath);\nconst audioItem = allItems.find(item => item.json.audioPath);\n\nif (imageItems.length === 0 || !audioItem) {\n  throw new Error('병합된 데이터에서 이미지 또는 오디오 정보를 찾을 수 없습니다.');\n}\n\nconsole.log('✅ 이미지', imageItems.length, '개, 오디오 1개 확인');\n\n// 2. 정렬\nimageItems.sort((a, b) => a.json.sceneNumber - b.json.sceneNumber);\n\n// 3. 이미지당 duration 고정 (40초 ÷ 12장 = 3.33초)\nconst DURATION_PER_SCENE = 3.5; // 3.5초씩 (총 42초)\n\n// 4. Concat 생성\nconst concatLines = [];\nfor (const item of imageItems) {\n  const scene = item.json;\n  concatLines.push('file \\'' + scene.fileName + '\\'');\n  concatLines.push('duration ' + DURATION_PER_SCENE);\n  console.log('✅ Scene', scene.sceneNumber, ':', scene.fileName, '(', DURATION_PER_SCENE, '초)');\n}\n\n// 마지막 이미지 추가\nif (imageItems.length > 0) {\n  concatLines.push('file \\'' + imageItems[imageItems.length - 1].json.fileName + '\\'');\n}\n\nconst concatContent = concatLines.join(String.fromCharCode(10));\n\nconsole.log('\\n총', concatLines.length, '줄');\n\nreturn [{\n  json: {\n    tmpDir: originalData.tmpDir,\n    concatContent: concatContent,\n    videoTitle: originalData.videoTitle,\n    fullScript: originalData.fullScript,\n    outputPath: originalData.tmpDir + '/output.mp4'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2384,
+        752
+      ],
+      "id": "f822f236-2bd3-4302-83b0-4bab5946940a",
+      "name": "9-1. Concat 파일 내용 생성"
+    },
+    {
+      "parameters": {
+        "command": "=mkdir -p {{ $json.tmpDir }} && echo \"✅ 디렉토리 생성: {{ $json.tmpDir }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -5200,
+        752
+      ],
+      "id": "d38ab0a7-ce47-4c3a-804a-5b25291e5139",
+      "name": "3-1. 디렉토리 생성"
+    },
+    {
+      "parameters": {
+        "jsCode": "// child_process 제거! 데이터만 전달\nconst data = $input.first().json;\n\nconsole.log('=== 데이터 전달 ===');\nconsole.log('경로:', data.tmpDir);\nconsole.log('전달할 scenes 개수:', data.scenes.length);\n\nreturn {\n  json: data\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5408,
+        752
+      ],
+      "id": "0afbed6a-5556-45ab-a97a-7f4f559c0909",
+      "name": "3. 데이터 전달"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Execute Command 결과는 무시하고, 원본 데이터 가져오기\nconst originalData = $('3. 데이터 전달').first().json;\n\nconsole.log('=== 데이터 복원 ===');\nconsole.log('scenes 개수:', originalData.scenes.length);\nconsole.log('tmpDir:', originalData.tmpDir);\n\nreturn {\n  json: originalData\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4960,
+        752
+      ],
+      "id": "4c3e8d7c-1e86-4e8d-9605-24dc9dedd037",
+      "name": "3-2. 데이터 복원"
+    },
+    {
+      "parameters": {},
+      "type": "CUSTOM.googleSpeech",
+      "typeVersion": 1,
+      "position": [
+        -3696,
+        944
+      ],
+      "id": "30aa596d-bbd8-4d29-a3a7-b1ec31097e82",
+      "name": "6b. TTS 생성",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\n# 9-2. Concat 파일 저장 (최종 완벽 버전)\n\nTMP_DIR=\"{{ $json.tmpDir }}\"\nCONCAT_FILE=\"${TMP_DIR}/concat.txt\"\n\necho \"=== Concat 파일 저장 ===\"\necho \"📁 tmpDir: $TMP_DIR\"\necho \"📄 파일: $CONCAT_FILE\"\n\n# 디렉토리 확인\nif [ ! -d \"$TMP_DIR\" ]; then\n    echo \"❌ 디렉토리가 없습니다: $TMP_DIR\"\n    exit 1\nfi\n\n# echo -e를 사용하여 이스케이프 시퀀스 해석\necho -e '{{ $json.concatContent }}' > \"$CONCAT_FILE\"\n\n# 파일 생성 확인\nif [ ! -f \"$CONCAT_FILE\" ]; then\n    echo \"❌ concat.txt 생성 실패\"\n    exit 1\nfi\n\necho \"✅ concat.txt 생성 완료\"\necho \"\"\n\n# 생성된 파일 내용 확인\necho \"📝 concat.txt 내용:\"\ncat \"$CONCAT_FILE\"\necho \"\"\n\n# 줄바꿈 제대로 되었는지 확인\nLINE_COUNT=$(wc -l < \"$CONCAT_FILE\")\necho \"📊 총 줄 수: $LINE_COUNT\"\n\n# 이미지 파일 확인\nIMAGE_COUNT=$(ls -1 \"$TMP_DIR\"/scene_*.png 2>/dev/null | wc -l)\necho \"🖼️ 이미지 파일: ${IMAGE_COUNT}개\"\n\n# 각 이미지 파일 존재 여부 확인\necho \"📋 이미지 파일 목록:\"\nls -1 \"$TMP_DIR\"/scene_*.png 2>/dev/null || echo \"❌ 이미지 없음\"\necho \"\"\n\n# 오디오 파일 확인\nif [ -f \"$TMP_DIR/audio.mp3\" ]; then\n    AUDIO_SIZE=$(ls -lh \"$TMP_DIR/audio.mp3\" | awk '{print $5}')\n    echo \"🔊 오디오: ✅ ($AUDIO_SIZE)\"\nelse\n    echo \"🔊 오디오: ❌ 없음\"\n    exit 1\nfi\n\necho \"\"\necho \"✅ 모든 파일 준비 완료!\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        752
+      ],
+      "id": "656e0f42-bb0a-4161-ba69-7ae31a416b6e",
+      "name": "9-2. Concat 파일 저장"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/imagen-3.0-generate-002",
+          "mode": "list"
+        },
+        "prompt": "={{ $json.output }}\n\nVertical format, 9:16 aspect ratio, photorealistic, 4K quality",
+        "options": {
+          "sampleCount": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -3712,
+        320
+      ],
+      "id": "147ddca2-2b2e-4859-8a41-785fc49bc472",
+      "name": "6a. 이미지 생성1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 7a-1. 이미지 데이터 준비1 - 배치2 (scene 5-8)\n\nconst items = $input.all();\nconst tmpDir = $('2. 데이터 추출').first().json.tmpDir;\nconst BATCH_NUMBER = 2; // 배치2 고정\n\nconsole.log('=== 배치 2 이미지 데이터 준비 ===');\nconsole.log('입력 아이템 개수:', items.length);\nconsole.log('tmpDir:', tmpDir);\n\n// 배치2의 장면 데이터 가져오기 (sceneNumber 5-8)\nconst allScenes = $('4. 장면 분할').all();\nconst originalScenes = allScenes.filter(s => s.json.batchNumber === BATCH_NUMBER);\n\nconsole.log('배치', BATCH_NUMBER, ':', originalScenes.length, '개 장면');\n\nif (originalScenes.length === 0) {\n  throw new Error('배치 2 장면 데이터 없음');\n}\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const binaryData = item.binary;\n  \n  if (!binaryData) {\n    console.error('아이템', i + 1, ': Binary 데이터 없음');\n    continue;\n  }\n  \n  const binaryKey = Object.keys(binaryData)[0];\n  if (!binaryKey) {\n    console.error('아이템', i + 1, ': Binary 키 없음');\n    continue;\n  }\n  \n  if (i >= originalScenes.length) {\n    console.error('아이템', i + 1, ': 원본 장면 인덱스 초과');\n    continue;\n  }\n  \n  const originalScene = originalScenes[i];\n  const sceneNumber = originalScene.json.sceneNumber;\n  const text = originalScene.json.text;\n  const duration = originalScene.json.duration;\n  \n  const fileName = 'scene_' + String(sceneNumber).padStart(2, '0') + '.png';\n  const filePath = tmpDir + '/' + fileName;\n  \n  console.log('✅ 장면', sceneNumber, ':', fileName, '(', duration, '초)');\n  \n  results.push({\n    json: {\n      sceneNumber: sceneNumber,\n      text: text,\n      duration: duration,\n      filePath: filePath,\n      fileName: fileName,\n      tmpDir: tmpDir\n    },\n    binary: {\n      data: binaryData[binaryKey]\n    }\n  });\n}\n\nconsole.log('✅ 배치 2 총', results.length, '개 이미지 준비 완료');\n\nif (results.length === 0) {\n  throw new Error('처리된 이미지가 없습니다.');\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3488,
+        320
+      ],
+      "id": "7e1a08bc-1e00-4b2d-93f9-c6ad2c962834",
+      "name": "7a-1. 이미지 데이터 준비1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.filePath }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -3264,
+        320
+      ],
+      "id": "7b17d739-c306-44f1-ba80-3d406918f7ad",
+      "name": "7a-2. 이미지 파일 저장1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/imagen-3.0-generate-002",
+          "mode": "list"
+        },
+        "prompt": "={{ $json.output }}\n\nVertical format, 9:16 aspect ratio, photorealistic, 4K quality",
+        "options": {
+          "sampleCount": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -3712,
+        608
+      ],
+      "id": "add7c793-cadd-43ad-8f99-7d831f755b16",
+      "name": "6a. 이미지 생성2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 7a-1. 이미지 데이터 준비2 - 배치3 (scene 9-12)\n\nconst items = $input.all();\nconst tmpDir = $('2. 데이터 추출').first().json.tmpDir;\nconst BATCH_NUMBER = 3; // 배치3 고정\n\nconsole.log('=== 배치 3 이미지 데이터 준비 ===');\nconsole.log('입력 아이템 개수:', items.length);\nconsole.log('tmpDir:', tmpDir);\n\n// 배치3의 장면 데이터 가져오기 (sceneNumber 9-12)\nconst allScenes = $('4. 장면 분할').all();\nconst originalScenes = allScenes.filter(s => s.json.batchNumber === BATCH_NUMBER);\n\nconsole.log('배치', BATCH_NUMBER, ':', originalScenes.length, '개 장면');\n\nif (originalScenes.length === 0) {\n  throw new Error('배치 3 장면 데이터 없음');\n}\n\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const binaryData = item.binary;\n  \n  if (!binaryData) {\n    console.error('아이템', i + 1, ': Binary 데이터 없음');\n    continue;\n  }\n  \n  const binaryKey = Object.keys(binaryData)[0];\n  if (!binaryKey) {\n    console.error('아이템', i + 1, ': Binary 키 없음');\n    continue;\n  }\n  \n  if (i >= originalScenes.length) {\n    console.error('아이템', i + 1, ': 원본 장면 인덱스 초과');\n    continue;\n  }\n  \n  const originalScene = originalScenes[i];\n  const sceneNumber = originalScene.json.sceneNumber;\n  const text = originalScene.json.text;\n  const duration = originalScene.json.duration;\n  \n  const fileName = 'scene_' + String(sceneNumber).padStart(2, '0') + '.png';\n  const filePath = tmpDir + '/' + fileName;\n  \n  console.log('✅ 장면', sceneNumber, ':', fileName, '(', duration, '초)');\n  \n  results.push({\n    json: {\n      sceneNumber: sceneNumber,\n      text: text,\n      duration: duration,\n      filePath: filePath,\n      fileName: fileName,\n      tmpDir: tmpDir\n    },\n    binary: {\n      data: binaryData[binaryKey]\n    }\n  });\n}\n\nconsole.log('✅ 배치 3 총', results.length, '개 이미지 준비 완료');\n\nif (results.length === 0) {\n  throw new Error('처리된 이미지가 없습니다.');\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3488,
+        608
+      ],
+      "id": "ee552987-1667-4c70-933b-6dac2d145d30",
+      "name": "7a-1. 이미지 데이터 준비2"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.filePath }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -3264,
+        608
+      ],
+      "id": "dba63d0a-e992-4503-b511-28a469b2433a",
+      "name": "7a-2. 이미지 파일 저장2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 한국어 스토리를 영어 이미지 프롬프트로 변환해줘:\n\n{{ $json.text }}\n\n요구사항:\n- 한국사람으로 한정\n- 유튜브 쇼츠용 세로 이미지 (9:16 비율, vertical format)\n- 사실적이고 생동감 있는 장면\n- 텍스트나 글자 제외\n- Photorealistic, 4K quality\n- 100단어 이내\n\n오직 영어 프롬프트만 출력.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -4064,
+        320
+      ],
+      "id": "2104e0e7-d8ba-4ce3-8ce0-8a40741eff42",
+      "name": "5a. 이미지 프롬프트1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음 한국어 스토리를 영어 이미지 프롬프트로 변환해줘:\n\n{{ $json.text }}\n\n요구사항:\n- 한국사람으로 한정\n- 유튜브 쇼츠용 세로 이미지 (9:16 비율, vertical format)\n- 사실적이고 생동감 있는 장면\n- 텍스트나 글자 제외\n- Photorealistic, 4K quality\n- 100단어 이내\n\n오직 영어 프롬프트만 출력.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -4064,
+        32
+      ],
+      "id": "e4ac47e8-48d0-4f39-8fb0-127ae57be00b",
+      "name": "5a. 이미지 프롬프트2"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-thinking-exp-1219",
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4064,
+        192
+      ],
+      "id": "cc909994-cc3a-4d73-bfd9-5a68aaf7e765",
+      "name": "Google Gemini Chat Model3"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4064,
+        480
+      ],
+      "id": "94f907ea-f553-497b-bef1-a41cafc20eae",
+      "name": "Google Gemini Chat Model4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffb5abe3-5018-4e4e-9161-25a06a4a50bc",
+              "leftValue": "={{ $json.batchNumber }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4400,
+        48
+      ],
+      "id": "35048b91-f95d-4cf1-9cc2-c05dfa07c22e",
+      "name": "4-1a. 배치1 분기"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffb5abe3-5018-4e4e-9161-25a06a4a50bc",
+              "leftValue": "={{ $json.batchNumber }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4400,
+        336
+      ],
+      "id": "7e602fd3-27e2-4fdc-b7e7-9708fa4278e3",
+      "name": "4-1b. 배치2 분기"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffb5abe3-5018-4e4e-9161-25a06a4a50bc",
+              "leftValue": "={{ $json.batchNumber }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4384,
+        624
+      ],
+      "id": "4d5cba51-9e98-4aaf-9c41-5a1729c29cd2",
+      "name": "4-1c. 배치3 분기"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.filePath }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -3264,
+        32
+      ],
+      "id": "9623c51e-e8de-4aa1-aba4-9714dfaeeff5",
+      "name": "7a-2. 이미지 파일 저장"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -6128,
+        752
+      ],
+      "id": "9092fa85-bf40-4d7f-8757-ba55daf660aa",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {
+    "1. 주제 생성": {
+      "main": [
+        [
+          {
+            "node": "2. 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "3. 데이터 전달",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. 장면 분할": {
+      "main": [
+        [
+          {
+            "node": "5b. 스크립트 작성",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4-1c. 배치3 분기",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4-1b. 배치2 분기",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4-1a. 배치1 분기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5a. 이미지 프롬프트": {
+      "main": [
+        [
+          {
+            "node": "6a. 이미지 생성2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6a. 이미지 생성": {
+      "main": [
+        [
+          {
+            "node": "7a-1. 이미지 데이터 준비",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. 데이터 병합": {
+      "main": [
+        [
+          {
+            "node": "9-1. Concat 파일 내용 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. 동영상 제작": {
+      "main": [
+        [
+          {
+            "node": "11. 동영상 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. 동영상 읽기": {
+      "main": [
+        [
+          {
+            "node": "12. 유튜브 업로드",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12. 유튜브 업로드": {
+      "main": [
+        [
+          {
+            "node": "13. 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "1. 주제 생성",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "5b. 스크립트 작성",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-1. 이미지 데이터 준비": {
+      "main": [
+        [
+          {
+            "node": "7a-2. 이미지 파일 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7b-1. 오디오 경로 준비": {
+      "main": [
+        [
+          {
+            "node": "7b-2. 오디오 파일 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7b-2. 오디오 파일 저장": {
+      "main": [
+        [
+          {
+            "node": "8. 데이터 병합",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "9-1. Concat 파일 내용 생성": {
+      "main": [
+        [
+          {
+            "node": "9-2. Concat 파일 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3-1. 디렉토리 생성": {
+      "main": [
+        [
+          {
+            "node": "3-2. 데이터 복원",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. 데이터 전달": {
+      "main": [
+        [
+          {
+            "node": "3-1. 디렉토리 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3-2. 데이터 복원": {
+      "main": [
+        [
+          {
+            "node": "4. 장면 분할",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9-2. Concat 파일 저장": {
+      "main": [
+        [
+          {
+            "node": "10. 동영상 제작",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6a. 이미지 생성1": {
+      "main": [
+        [
+          {
+            "node": "7a-1. 이미지 데이터 준비1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-1. 이미지 데이터 준비1": {
+      "main": [
+        [
+          {
+            "node": "7a-2. 이미지 파일 저장1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-2. 이미지 파일 저장1": {
+      "main": [
+        [
+          {
+            "node": "8. 데이터 병합",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "6a. 이미지 생성2": {
+      "main": [
+        [
+          {
+            "node": "7a-1. 이미지 데이터 준비2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-1. 이미지 데이터 준비2": {
+      "main": [
+        [
+          {
+            "node": "7a-2. 이미지 파일 저장2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-2. 이미지 파일 저장2": {
+      "main": [
+        [
+          {
+            "node": "8. 데이터 병합",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "5a. 이미지 프롬프트1": {
+      "main": [
+        [
+          {
+            "node": "6a. 이미지 생성1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5a. 이미지 프롬프트2": {
+      "main": [
+        [
+          {
+            "node": "6a. 이미지 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4-1a. 배치1 분기": {
+      "main": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4-1b. 배치2 분기": {
+      "main": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4-1c. 배치3 분기": {
+      "main": [
+        [
+          {
+            "node": "5a. 이미지 프롬프트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a-2. 이미지 파일 저장": {
+      "main": [
+        [
+          {
+            "node": "8. 데이터 병합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "1. 주제 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "7218c8a7-93fc-4ed0-bd8c-511a5578a3ad",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-17T07:09:55.302Z",
+      "createdAt": "2025-10-17T07:09:55.302Z",
+      "role": "workflow:owner",
+      "workflowId": "nPppSmMzaqMV2k7N",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

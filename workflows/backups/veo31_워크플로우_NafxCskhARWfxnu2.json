@@ -1,0 +1,540 @@
+{
+  "updatedAt": "2025-10-20T12:36:59.000Z",
+  "createdAt": "2025-10-20T11:55:33.370Z",
+  "id": "NafxCskhARWfxnu2",
+  "name": "veo3.1 워크플로우",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Create video using Veo 3.1",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "prompt",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Resolution",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "720p"
+                  },
+                  {
+                    "option": "1080p"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Aspect ratio",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "16:9"
+                  },
+                  {
+                    "option": "9:16"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Video duration (seconds)",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "4"
+                  },
+                  {
+                    "option": "6"
+                  },
+                  {
+                    "option": "8"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Start image",
+              "fieldType": "file",
+              "multipleFiles": false
+            },
+            {
+              "fieldLabel": "End image",
+              "fieldType": "file",
+              "multipleFiles": false
+            },
+            {
+              "fieldLabel": "Generate audio",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Generate audio"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -80,
+        344
+      ],
+      "id": "86dcf352-b13d-4377-b0d1-1ce5e093c666",
+      "name": "On form submission",
+      "webhookId": "056622a7-8752-4a57-aefb-603af43766da"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = {};\n\nfor (const file in $input.first().binary) {\n  try {\n    const bin = $input.first().binary[file];\n    const binBuffer = await this.helpers.getBinaryDataBuffer(0, file);\n\n    const path = bin.directory\n      ? `${bin.directory}/${bin.fileName}`\n      : bin.fileName;\n\n    results[file] = {\n      data: Buffer.from(binBuffer).toString('base64'),\n      mime: bin.mimeType,\n    };\n  } catch (error) {\n    console.error(`Error processing file \"${file}\": ${error.message}`);\n  }\n}\n\nreturn [{\n  json: {\n    files: results,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        344
+      ],
+      "id": "9a7d101f-6600-41b5-8427-31d730f3c050",
+      "name": "Convert images to base64"
+    },
+    {
+      "parameters": {
+        "content": "# Configure me",
+        "height": 352,
+        "width": 256,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        152
+      ],
+      "typeVersion": 1,
+      "id": "e39929bf-6c00-49cd-a6c3-65a83fba03ac",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6e9fbe2d-6636-4df2-8054-811f855d376d",
+              "name": "PROJECT_ID",
+              "value": "veo3-475711",
+              "type": "string"
+            },
+            {
+              "id": "1e65c4b0-c7c0-4876-a710-0b720931e3f6",
+              "name": "LOCATION_ID",
+              "value": "us-central1",
+              "type": "string"
+            },
+            {
+              "id": "0bef756a-6e2a-434f-9f42-ff4a74a1de64",
+              "name": "API_ENDPOINT",
+              "value": "us-central1-aiplatform.googleapis.com",
+              "type": "string"
+            },
+            {
+              "id": "30431164-1a3f-4194-92aa-5c966bd87e54",
+              "name": "MODEL_ID",
+              "value": "veo-3.1-generate-preview",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        344
+      ],
+      "id": "114cd5ab-c98a-46bb-ad37-41f53b9fc527",
+      "name": "Configure me"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acc5846c-f85a-49d8-9e31-00a77714332f",
+              "name": "URL",
+              "value": "=https://{{ $json.API_ENDPOINT }}/v1/projects/{{ $json.PROJECT_ID }}/locations/{{ $json.LOCATION_ID }}/publishers/google/models/{{ $json.MODEL_ID }}:predictLongRunning",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        344
+      ],
+      "id": "ee15cb67-65e4-4eba-b3e1-1c49e27fc1d2",
+      "name": "Setup workflow"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $('Configure me').item.json.API_ENDPOINT }}/v1/projects/{{ $('Configure me').item.json.PROJECT_ID }}/locations/{{ $('Configure me').item.json.LOCATION_ID }}/publishers/google/models/{{ $('Configure me').item.json.MODEL_ID }}:fetchPredictOperation",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"operationName\": $('Start generating the video').first().json.name\n}, null, 2) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        272
+      ],
+      "id": "f7091f1c-60cd-4c9d-b365-e450d3f7db3c",
+      "name": "Get the status of the generation",
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "hCdoCn4FpA3l2L7n",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5de4dcc5-afd1-49ab-aa0e-c2c6ecf247e1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.done }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6ff1df10-4e5f-43b9-a839-3f7636f7b4fa",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1488,
+        272
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.URL }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    endpoint: `projects/${$('Configure me').item.json.PROJECT_ID}/locations/${$('Configure me').item.json.LOCATION_ID}/publishers/google/models/${$('Configure me').item.json.MODEL_ID}`,\n    instances: [\n        {\n            prompt: $('On form submission').item.json.prompt,\n            image: $('Convert images to base64').item.json.files['Start_image'] ? {\n              \"bytesBase64Encoded\": $('Convert images to base64').item.json.files['Start_image'].data,\n              \"mimeType\": $('Convert images to base64').item.json.files['Start_image'].mime\n            } : undefined,\n            \"lastFrame\": $('Convert images to base64').item.json.files['End_image'] ? {\n              \"bytesBase64Encoded\": $('Convert images to base64').item.json.files['End_image'].data,\n              \"mimeType\": $('Convert images to base64').item.json.files['End_image'].mime\n            } : undefined,\n        }\n    ],\n    parameters: {\n        aspectRatio: $('On form submission').item.json['Aspect ratio'],\n        sampleCount: 1,\n        // negativePrompt: \"\",\n        // enhancePrompt: true,\n        // compressionQuality: \"optimized\",\n        durationSeconds: $('On form submission').item.json['Video duration (seconds)'],\n        personGeneration: \"allow_all\",\n        addWatermark: true,\n        includeRaiReason: true,\n        generateAudio: $('On form submission').item.json['Generate audio'].some(item => item === 'Generate audio'),\n        resolution: $('On form submission').item.json.Resolution,\n    }\n}, null, 2) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        344
+      ],
+      "id": "5d983ab1-594f-410f-a49a-76af64a2292f",
+      "name": "Start generating the video",
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "hCdoCn4FpA3l2L7n",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "response.videos[0].bytesBase64Encoded",
+        "options": {}
+      },
+      "id": "f62afe37-224c-4ad2-9428-38108b8a1cb0",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        1712,
+        224
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        344
+      ],
+      "id": "71558d03-6af6-46c3-8397-694fbb89f1aa",
+      "name": "Initial wait",
+      "webhookId": "973ad659-e1ca-4daf-b6f6-bf6242cb4be2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        440
+      ],
+      "id": "4b9cf95a-7a74-4706-804f-e43bbeb9e7b0",
+      "name": "Wait before polling again",
+      "webhookId": "d68106f3-971c-47b6-8800-e02a3e273b8c"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        440
+      ],
+      "id": "74b82fe7-5773-471f-8040-4408a6f9cebf",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "https://www.youtube.com/watch?v=bNzkWBOE37Y\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "fab637c2-3faa-47a6-94a4-9d31d4101746",
+      "name": "Sticky Note2"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Convert images to base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert images to base64": {
+      "main": [
+        [
+          {
+            "node": "Configure me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure me": {
+      "main": [
+        [
+          {
+            "node": "Setup workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup workflow": {
+      "main": [
+        [
+          {
+            "node": "Start generating the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the status of the generation": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait before polling again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start generating the video": {
+      "main": [
+        [
+          {
+            "node": "Initial wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial wait": {
+      "main": [
+        [
+          {
+            "node": "Get the status of the generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait before polling again": {
+      "main": [
+        [
+          {
+            "node": "Initial wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "ee66515d-b8c2-4e4f-941e-fb104cdd3985",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-20T11:55:33.376Z",
+      "createdAt": "2025-10-20T11:55:33.376Z",
+      "role": "workflow:owner",
+      "workflowId": "NafxCskhARWfxnu2",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

@@ -1,0 +1,354 @@
+{
+  "updatedAt": "2025-11-15T07:11:25.000Z",
+  "createdAt": "2025-11-14T02:53:09.201Z",
+  "id": "ueYgYa909ZwwtdCT",
+  "name": "My workflow 4",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8283a551-5f19-4cfc-9d09-24af91d3a487",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4ef3f275-cd59-46ae-a90d-68d7afbfae4f",
+      "name": "Get many databases",
+      "credentials": {
+        "notionApi": {
+          "id": "lPApQoj4XEyPgSK3",
+          "name": "노션 강의 테스트키"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.id }}",
+                    "rightValue": "2aaccaf8-41aa-80ff-b72b-e1185a76b6d6",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "295a86e8-5001-42bc-a7ce-02d8fd203a77"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e2a53835-005f-4dcc-82fb-91941ef49ded",
+                    "leftValue": "={{ $json.id }}",
+                    "rightValue": "2aaccaf8-41aa-80af-b754-ee7a70a3a8da",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6ed74611-95a3-4e02-83e4-a4a82ea1c772",
+                    "leftValue": "={{ $json.id }}",
+                    "rightValue": "2aaccaf8-41aa-8081-bebe-f5534885b1e4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "c873e9cb-71e9-4653-938f-2f034840742b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        -144
+      ],
+      "id": "4e58600b-acd1-49ed-8af1-49e38e7da1c2",
+      "name": "Step3",
+      "credentials": {
+        "notionApi": {
+          "id": "lPApQoj4XEyPgSK3",
+          "name": "노션 강의 테스트키"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        16
+      ],
+      "id": "5204de8c-51b7-4afd-866a-9da4e89c706a",
+      "name": "Step2",
+      "credentials": {
+        "notionApi": {
+          "id": "lPApQoj4XEyPgSK3",
+          "name": "노션 강의 테스트키"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        176
+      ],
+      "id": "91270dbe-ff77-4273-97e7-873ec93f52b4",
+      "name": "Step1",
+      "credentials": {
+        "notionApi": {
+          "id": "lPApQoj4XEyPgSK3",
+          "name": "노션 강의 테스트키"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -144
+      ],
+      "id": "8415b788-e52f-49ef-bfe4-451a5f69a584",
+      "name": "Get a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "lPApQoj4XEyPgSK3",
+          "name": "노션 강의 테스트키"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many databases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many databases": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Step3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Step2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Step1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step3": {
+      "main": [
+        [
+          {
+            "node": "Get a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "6195248b-e0f2-43d8-b688-c4e6530c509a",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-14T02:53:09.205Z",
+      "createdAt": "2025-11-14T02:53:09.205Z",
+      "role": "workflow:owner",
+      "workflowId": "ueYgYa909ZwwtdCT",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

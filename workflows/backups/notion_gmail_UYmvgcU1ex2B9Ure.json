@@ -1,0 +1,195 @@
+{
+  "updatedAt": "2025-10-15T00:24:18.000Z",
+  "createdAt": "2025-10-14T23:51:30.733Z",
+  "id": "UYmvgcU1ex2B9Ure",
+  "name": "notion gmail",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "테스트",
+        "emailType": "text",
+        "message": "안녕",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        -64
+      ],
+      "id": "abbb5929-df04-41df-ae84-5aeff1b85cec",
+      "name": "Send a message",
+      "webhookId": "56c2bb4a-fb04-454d-a6c8-2efd33d93ff0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "iHT4QqSKnzLtaulH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2899c221-6eb8-8058-a57d-fa0728c2fdeb",
+          "mode": "list",
+          "cachedResultName": "유튜브",
+          "cachedResultUrl": "https://www.notion.so/2899c2216eb88058a57dfa0728c2fdeb"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        -64
+      ],
+      "id": "63b3d513-8549-4186-8b4a-09d8061e7cc2",
+      "name": "Get many database pages",
+      "credentials": {
+        "notionApi": {
+          "id": "ZZGeENNo0DKiLT1h",
+          "name": "seunan"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "databaseId": {
+          "__rl": true,
+          "value": "2899c221-6eb8-8058-a57d-fa0728c2fdeb",
+          "mode": "list",
+          "cachedResultName": "유튜브",
+          "cachedResultUrl": "https://www.notion.so/2899c2216eb88058a57dfa0728c2fdeb"
+        }
+      },
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        112
+      ],
+      "id": "74584dc5-04e5-44eb-a110-4f780e459b91",
+      "name": "Notion Trigger",
+      "credentials": {
+        "notionApi": {
+          "id": "ZZGeENNo0DKiLT1h",
+          "name": "seunan"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Notion Trigger": {
+      "lastTimeChecked": "2025-10-15T00:21:00.000Z",
+      "possibleDuplicates": [
+        "28d9c221-6eb8-80f1-be65-f10bc8787e85"
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "20a497b3-aa3c-4b66-9461-0c7a314e31b1",
+  "versionCounter": 1,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-14T23:51:30.737Z",
+      "createdAt": "2025-10-14T23:51:30.737Z",
+      "role": "workflow:owner",
+      "workflowId": "UYmvgcU1ex2B9Ure",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

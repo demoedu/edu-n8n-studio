@@ -1,0 +1,220 @@
+{
+  "updatedAt": "2025-10-18T06:42:16.000Z",
+  "createdAt": "2025-10-18T04:41:56.997Z",
+  "id": "io30VU3y4aSf0oLy",
+  "name": "이미지 생성 자동화",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        16
+      ],
+      "id": "20860168-046c-4162-b7c6-7e062471f869",
+      "name": "When chat message received",
+      "webhookId": "a390e445-be7c-4831-b956-2f8ea49cb8d9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyC7JcQkkuLmJhVYJDj134qXawtoZ3C17Fo"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"contents\": [{\n      \"parts\": [\n        {\"text\": \"{{ $json.output }}\"}\n      ]\n    }]\n  } ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        16
+      ],
+      "id": "3345a132-3ff1-44e5-812f-2c879f109c1c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# n8n 이미지 프롬프트 고도화 시스템 프롬프트\n\n## 역할\n사용자의 이미지 생성 프롬프트를 즉시 고도화하는 전문가\n\n## 핵심 규칙\n1. **즉시 변환**: 분석 과정 없이 바로 영어 프롬프트 출력\n2. **스마트 보완**: 명시되지 않은 요소만 추가\n3. **한 줄 출력**: 완성된 영어 프롬프트만 반환\n\n## 자동 보완 패턴\n\n### 기본 구조\n`[주제] + [스타일] + [환경] + [조명] + [품질]`\n\n### 키워드 매칭\n- 귀여운/예쁜 → soft, pastel, charming\n- 멋진/강렬한 → dramatic, bold, dynamic\n- 심플한/깔끔한 → minimalist, clean\n- 화려한/럭셔리 → ornate, rich, elegant\n- 빈티지/레트로 → nostalgic, film grain\n- 미래적/SF → futuristic, neon, sci-fi\n\n### 용도별 스타일\n- 발표/비즈니스 → professional, clean, corporate aesthetic\n- 배경화면 → high resolution, balanced composition\n- 마케팅 → eye-catching, commercial quality\n- 아트워크 → artistic, creative composition\n\n## 변환 예시\n\n**입력**: \"귀여운 고양이\"\n**출력**: Cute cat with fluffy fur, playful pose, soft natural lighting, pastel background, charming atmosphere, high quality\n\n**입력**: \"회사 발표용 AI 이미지\"\n**출력**: AI technology visualization, professional presentation style, clean modern design, blue tech aesthetic, corporate quality\n\n**입력**: \"몽환적인 숲\"\n**출력**: Mystical forest with fog, ethereal lighting, fantasy atmosphere, dreamy color palette, magical ambiance\n\n## 처리 지시\n1. '{{ $json.chatInput }}' 받기\n2. 한국어→영어 변환\n3. 누락 요소 자동 추가\n4. 한 줄로 출력\n5. 부가 설명 없음\n\n## 금지사항\n- 실존 인물명\n- 브랜드명\n- 저작권 캐릭터\n- 부적절한 내용"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        16
+      ],
+      "id": "5152d6c7-67cb-46c5-9c05-f02dccbbe413",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        16,
+        224
+      ],
+      "id": "ab3f1cbd-85e4-468e-8b03-3cb0330439d3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZmuP0MESUuMeBhBQ",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "candidates[0].content.parts[1].inlineData.data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        16
+      ],
+      "id": "4f060c26-b1e7-4112-a61d-f57b57bf20ec",
+      "name": "Convert to File"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b0bf73a6-5966-4970-b75e-9bf5726360df",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-18T04:41:57.001Z",
+      "createdAt": "2025-10-18T04:41:57.001Z",
+      "role": "workflow:owner",
+      "workflowId": "io30VU3y4aSf0oLy",
+      "projectId": "IC88dd2d9Hx6YiyI",
+      "project": {
+        "updatedAt": "2025-09-20T13:52:29.594Z",
+        "createdAt": "2025-09-20T13:45:08.916Z",
+        "id": "IC88dd2d9Hx6YiyI",
+        "name": "Aiden Ahn <senugw0u@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-09-20T13:45:08.916Z",
+            "createdAt": "2025-09-20T13:45:08.916Z",
+            "userId": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+            "projectId": "IC88dd2d9Hx6YiyI",
+            "user": {
+              "updatedAt": "2025-11-18T15:52:58.000Z",
+              "createdAt": "2025-09-20T13:45:08.643Z",
+              "id": "e6845f9c-5e74-45fb-8e27-14d56a0a1fea",
+              "email": "senugw0u@gmail.com",
+              "firstName": "Aiden",
+              "lastName": "Ahn",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-20T13:52:55.248Z",
+                "personalization_survey_n8n_version": "1.111.1",
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "UYmvgcU1ex2B9Ure",
+                "userActivatedAt": 1760487644703,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1763275179469
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-11-19",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
